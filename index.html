@@ -1,0 +1,654 @@
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Калькулятор компенсации за неиспользованный отпуск</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; color: #1a1a2e; line-height: 1.6; padding: 20px; }
+  .container { max-width: 960px; margin: 0 auto; background: #fff; border-radius: 16px; padding: 36px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+  h1 { font-size: 1.6rem; color: #16213e; margin-bottom: 6px; }
+  .subtitle { color: #6b7280; font-size: 0.9rem; margin-bottom: 26px; }
+  fieldset { border: 1px solid #e5e7eb; border-radius: 12px; padding: 18px; margin-bottom: 18px; }
+  legend { font-weight: 600; color: #16213e; padding: 0 8px; font-size: 0.92rem; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 640px) { .form-row { grid-template-columns: 1fr; } }
+  .form-group { margin-bottom: 14px; }
+  .form-group:last-child { margin-bottom: 0; }
+  label { display: block; font-weight: 500; margin-bottom: 6px; font-size: 0.88rem; color: #374151; }
+  input[type="date"], input[type="number"], select { width: 100%; padding: 9px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.95rem; background: #fff; }
+  input:focus, select:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+  small { display: block; color: #6b7280; font-size: 0.78rem; margin-top: 4px; }
+  .btn { padding: 12px 20px; border: none; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: 0.15s; }
+  .btn-primary { width: 100%; padding: 14px; background: linear-gradient(135deg, #3b82f6, #2563eb); color: #fff; font-size: 1.05rem; }
+  .btn-primary:hover { box-shadow: 0 4px 12px rgba(37,99,235,0.4); }
+  .btn-primary:active { transform: scale(0.98); }
+  .btn-secondary { background: #fff; color: #2563eb; border: 1px solid #bfdbfe; }
+  .btn-secondary:hover { background: #eff6ff; }
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+  .btn-add { background: #fff; color: #2563eb; border: 1px dashed #93c5fd; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 0.88rem; margin-top: 8px; }
+  .btn-add:hover { background: #eff6ff; }
+  .periods-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9rem; }
+  .periods-table th, .periods-table td { padding: 8px 10px; border-bottom: 1px solid #e5e7eb; text-align: left; }
+  .periods-table th { background: #f9fafb; font-weight: 600; color: #374151; font-size: 0.82rem; }
+  .periods-table td input { padding: 6px 8px; font-size: 0.9rem; }
+  .periods-table .btn-remove { background: #fee2e2; color: #b91c1c; border: none; border-radius: 6px; padding: 4px 10px; cursor: pointer; font-size: 0.85rem; }
+  .periods-table .btn-remove:hover { background: #fecaca; }
+  .results { margin-top: 26px; padding-top: 26px; border-top: 2px solid #e5e7eb; }
+  .results h2 { font-size: 1.2rem; color: #16213e; margin-bottom: 16px; }
+  .result-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+  @media (max-width: 640px) { .result-cards { grid-template-columns: 1fr; } }
+  .result-card { background: #f9fafb; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 6px; }
+  .result-card.highlight { background: #eff6ff; border: 1px solid #bfdbfe; }
+  .result-card.main { background: linear-gradient(135deg, #3b82f6, #2563eb); color: #fff; grid-column: 1 / -1; }
+  .result-card.main .result-label { color: rgba(255,255,255,0.85); }
+  .result-card.main .result-value { color: #fff; font-size: 1.8rem; }
+  .result-label { font-size: 0.82rem; color: #6b7280; font-weight: 500; }
+  .result-value { font-size: 1.3rem; font-weight: 700; color: #16213e; }
+  .mrot-badge { display: inline-block; background: #fef3c7; color: #92400e; padding: 4px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 600; margin-bottom: 12px; }
+  .details { background: #f9fafb; border-radius: 12px; padding: 18px; font-size: 0.88rem; }
+  .details h3 { font-size: 0.95rem; color: #16213e; margin-bottom: 10px; }
+  .details-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #e5e7eb; }
+  .details-item:last-child { border-bottom: none; }
+  .details-item .label { color: #6b7280; }
+  .details-item .value { font-weight: 600; color: #16213e; text-align: right; }
+  .explain { margin-top: 16px; padding: 16px; background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; font-size: 0.88rem; }
+  .explain h4 { font-size: 0.9rem; color: #16213e; margin-bottom: 8px; }
+  .explain p { margin-bottom: 8px; color: #374151; }
+  .explain p:last-child { margin-bottom: 0; }
+  .hidden { display: none; }
+  .legal-note { margin-top: 18px; font-size: 0.76rem; color: #6b7280; background: #f9fafb; padding: 12px 16px; border-radius: 10px; }
+
+  @media print {
+    body { background: #fff; padding: 0; }
+    .container { box-shadow: none; padding: 0; max-width: 100%; }
+    #calcForm { display: none !important; }
+    .btn, .btn-row { display: none !important; }
+    .results { border-top: none; margin-top: 0; padding-top: 0; }
+    .result-card.main { background: #2563eb !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Калькулятор компенсации за неиспользованный отпуск</h1>
+  <p class="subtitle">Расчёт по ст. 121, 127, 139 ТК РФ и Постановлению Правительства РФ от 24.04.2025 № 540. МРОТ 2026 — 27 093 ₽. Коэффициент — 29,3.</p>
+
+  <form id="calcForm" autocomplete="off" novalidate>
+    <fieldset>
+      <legend>Период работы</legend>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="hireDate">Дата приема на работу</label>
+          <input type="date" id="hireDate">
+        </div>
+        <div class="form-group">
+          <label for="fireDate">Дата увольнения</label>
+          <input type="date" id="fireDate">
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Основание увольнения</legend>
+      <div class="form-group">
+        <select id="reason">
+          <option value="own">По собственному желанию</option>
+          <option value="agreement">По соглашению сторон</option>
+          <option value="term">Истечение срока трудового договора</option>
+          <option value="refusal">Отказ от продолжения работы</option>
+          <option value="liquidation">Ликвидация организации</option>
+          <option value="ip_stop">Прекращение деятельности ИП</option>
+          <option value="reduction">Сокращение численности или штата</option>
+          <option value="army">Призыв на военную службу</option>
+          <option value="alt_service">Направление на альтернативную гражданскую службу</option>
+          <option value="restore">Восстановление на работе ранее занимавшего должность</option>
+          <option value="other">Другое</option>
+        </select>
+        <small>Основания «ликвидация», «прекращение ИП», «сокращение», «призыв», «альтернативная служба», «восстановление» дают право на полную компенсацию при стаже 5,5–11 месяцев</small>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Дни отпуска за год</legend>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="mainVacation">Основной отпуск</label>
+          <select id="mainVacation">
+            <option value="28" selected>28 дней (стандарт)</option>
+            <option value="30">30 дней (инвалиды)</option>
+            <option value="31">31 день (несовершеннолетние)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="extraVacation">Дополнительный отпуск</label>
+          <input type="number" id="extraVacation" value="0" min="0" step="1">
+          <small>Север, вредность, ненормированный день и т.д.</small>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="usedVacation">Использовано дней отпуска за всё время работы</label>
+        <input type="number" id="usedVacation" value="0" min="0" step="1">
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Расчётный период</legend>
+      <p style="font-size:0.82rem; color:#6b7280; margin-bottom:10px;">Строки формируются автоматически по месяцам работы. Заполните зарплату и исключаемые дни (больничные, отпуска, командировки).</p>
+      <table class="periods-table">
+        <thead>
+          <tr>
+            <th style="width:30%">Месяц</th>
+            <th style="width:25%">Зарплата, ₽</th>
+            <th style="width:25%">Исключаемые дни</th>
+            <th style="width:20%">За свой счёт, дн.</th>
+          </tr>
+        </thead>
+        <tbody id="monthsBody"></tbody>
+      </table>
+    </fieldset>
+
+    <fieldset>
+      <legend>Периоды, не идущие в отпускной стаж</legend>
+      <p style="font-size:0.82rem; color:#6b7280; margin-bottom:10px;">Декрет по уходу за ребёнком, прогулы, отпуск за свой счёт сверх 14 дней в рабочем году. Если таких периодов не было — оставьте пустым.</p>
+      <div id="stazhPeriodsList"></div>
+      <button type="button" class="btn-add" id="addStazhPeriod">+ Добавить период</button>
+    </fieldset>
+
+    <button type="submit" class="btn btn-primary">Рассчитать компенсацию</button>
+  </form>
+
+  <div id="result" class="results hidden">
+    <h2>Расчет компенсации отпуска при увольнении</h2>
+    <div id="mrotBadge" class="mrot-badge hidden">Применен МРОТ</div>
+
+    <div class="result-cards">
+      <div class="result-card">
+        <span class="result-label">Отпускной стаж</span>
+        <span class="result-value" id="rStazh">—</span>
+      </div>
+      <div class="result-card">
+        <span class="result-label">Дней к компенсации</span>
+        <span class="result-value" id="rDays">—</span>
+      </div>
+      <div class="result-card highlight">
+        <span class="result-label">Средний дневной заработок</span>
+        <span class="result-value" id="rAvg">—</span>
+      </div>
+      <div class="result-card main">
+        <span class="result-label">Сумма компенсации (до НДФЛ)</span>
+        <span class="result-value" id="rSum">—</span>
+      </div>
+    </div>
+
+    <div class="details">
+      <h3>Детали расчета</h3>
+      <div id="detailsList"></div>
+    </div>
+
+    <div class="explain" id="explainBox"></div>
+
+    <div class="btn-row">
+      <button type="button" class="btn btn-secondary" id="btnXml">Скачать XML</button>
+      <button type="button" class="btn btn-secondary" id="btnPrint">Печать / PDF</button>
+    </div>
+
+    <div class="legal-note">
+      Расчет по ст. 121, 127, 139 ТК РФ и Постановлению Правительства РФ от 24.04.2025 № 540.
+      МРОТ — 27 093 ₽, коэффициент — 29,3. Сумма указана до удержания НДФЛ.
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var MROT = 27093;
+  var AVG = 29.3;
+  var MONTHS = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+  var lastResult = null;
+
+  function $(id) { return document.getElementById(id); }
+
+  function parseDate(str) {
+    if (!str || typeof str !== 'string') return null;
+    var p = str.split('-').map(Number);
+    if (p.length !== 3 || p.some(isNaN)) return null;
+    return new Date(p[0], p[1] - 1, p[2]);
+  }
+  function daysInMonth(y, m) { return new Date(y, m + 1, 0).getDate(); }
+  function money(n) {
+    return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n || 0);
+  }
+  function num(n, d) {
+    return new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 0, maximumFractionDigits: d == null ? 2 : d }).format(n || 0);
+  }
+
+  function buildMonthsTable() {
+    var hireStr = $('hireDate').value;
+    var fireStr = $('fireDate').value;
+    var body = $('monthsBody');
+    body.innerHTML = '';
+
+    if (!hireStr || !fireStr) return;
+    var hire = parseDate(hireStr);
+    var fire = parseDate(fireStr);
+    if (!hire || !fire || fire < hire) return;
+
+    var startLimit = new Date(fire.getFullYear(), fire.getMonth() - 12, 1);
+    var startMonth = hire > startLimit ? new Date(hire.getFullYear(), hire.getMonth(), 1) : startLimit;
+    var endMonth = new Date(fire.getFullYear(), fire.getMonth(), 1);
+
+    var cur = new Date(startMonth.getFullYear(), startMonth.getMonth(), 1);
+    while (cur <= endMonth) {
+      var y = cur.getFullYear();
+      var m = cur.getMonth();
+
+      var monthStart = new Date(y, m, 1);
+      var monthEnd = new Date(y, m + 1, 0);
+
+      var workStart = (hire.getFullYear() === y && hire.getMonth() === m) ? hire : monthStart;
+      var workEnd = (fire.getFullYear() === y && fire.getMonth() === m) ? fire : monthEnd;
+
+      var tr = document.createElement('tr');
+      tr.dataset.year = y;
+      tr.dataset.month = m;
+      tr.dataset.workStart = workStart.toISOString().split('T')[0];
+      tr.dataset.workEnd = workEnd.toISOString().split('T')[0];
+
+      var td1 = document.createElement('td');
+      td1.textContent = MONTHS[m] + ' ' + y;
+      if (workStart.getDate() > 1 || workEnd.getDate() < monthEnd.getDate()) {
+        td1.textContent += ' (неполный)';
+      }
+
+      var td2 = document.createElement('td');
+      var salaryInp = document.createElement('input');
+      salaryInp.type = 'number';
+      salaryInp.className = 'salary';
+      salaryInp.min = 0; salaryInp.step = '0.01'; salaryInp.placeholder = '0';
+      td2.appendChild(salaryInp);
+
+      var td3 = document.createElement('td');
+      var exclInp = document.createElement('input');
+      exclInp.type = 'number';
+      exclInp.className = 'excluded';
+      exclInp.min = 0; exclInp.max = 31; exclInp.placeholder = '0';
+      td3.appendChild(exclInp);
+
+      var td4 = document.createElement('td');
+      var unpaidInp = document.createElement('input');
+      unpaidInp.type = 'number';
+      unpaidInp.className = 'unpaid';
+      unpaidInp.min = 0; unpaidInp.max = 31; unpaidInp.placeholder = '0';
+      td4.appendChild(unpaidInp);
+
+      tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3); tr.appendChild(td4);
+      body.appendChild(tr);
+
+      cur = new Date(y, m + 1, 1);
+    }
+  }
+
+  $('hireDate').addEventListener('change', buildMonthsTable);
+  $('fireDate').addEventListener('change', buildMonthsTable);
+
+  function addStazhPeriod() {
+    var list = $('stazhPeriodsList');
+    var row = document.createElement('div');
+    row.className = 'form-row';
+    row.style.marginBottom = '8px';
+    row.style.alignItems = 'center';
+
+    var d1 = document.createElement('div');
+    var sel = document.createElement('select');
+    sel.className = 'stazhType';
+    sel.innerHTML =
+      '<option value="childcare">Отпуск по уходу за ребёнком</option>' +
+      '<option value="unpaid_over14">Отпуск за свой счёт сверх 14 дней</option>' +
+      '<option value="absenteeism">Прогул</option>';
+    d1.appendChild(sel);
+
+    var d2 = document.createElement('div');
+    var fromInp = document.createElement('input');
+    fromInp.type = 'date'; fromInp.className = 'stazhFrom'; fromInp.title = 'С';
+    d2.appendChild(fromInp);
+
+    var d3 = document.createElement('div');
+    var toInp = document.createElement('input');
+    toInp.type = 'date'; toInp.className = 'stazhTo'; toInp.title = 'По';
+    d3.appendChild(toInp);
+
+    var d4 = document.createElement('div');
+    d4.style.flex = '0 0 auto';
+    var btn = document.createElement('button');
+    btn.type = 'button'; btn.className = 'btn-remove'; btn.textContent = '✕';
+    btn.style.cssText = 'background:#fee2e2;color:#b91c1c;border:none;border-radius:6px;padding:8px 12px;cursor:pointer;';
+    btn.onclick = function(){ row.remove(); };
+    d4.appendChild(btn);
+
+    row.appendChild(d1); row.appendChild(d2); row.appendChild(d3); row.appendChild(d4);
+    list.appendChild(row);
+  }
+  $('addStazhPeriod').addEventListener('click', addStazhPeriod);
+
+  function collectStazhExclusions() {
+    var rows = $('stazhPeriodsList').querySelectorAll('.form-row');
+    var out = [];
+    rows.forEach(function(row) {
+      var type = row.querySelector('.stazhType').value;
+      var fromStr = row.querySelector('.stazhFrom').value;
+      var toStr = row.querySelector('.stazhTo').value;
+      if (!fromStr || !toStr) return;
+      var from = parseDate(fromStr);
+      var to = parseDate(toStr);
+      if (!from || !to || to < from) return;
+      out.push({ type: type, from: from, to: to });
+    });
+    return out;
+  }
+
+  function calcStazhMonths(hire, fire, stazhExclusions) {
+    var y = fire.getFullYear() - hire.getFullYear();
+    var m = fire.getMonth() - hire.getMonth();
+    var d = fire.getDate() - hire.getDate();
+    if (d < 0) {
+      m--;
+      var pm = fire.getMonth() === 0 ? 11 : fire.getMonth() - 1;
+      var py = fire.getMonth() === 0 ? fire.getFullYear() - 1 : fire.getFullYear();
+      d += daysInMonth(py, pm);
+    }
+    if (m < 0) { y--; m += 12; }
+    var totalMonths = y * 12 + m;
+    var extraDays = d;
+
+    var excludedDaysTotal = 0;
+
+    stazhExclusions.forEach(function(ex) {
+      var days = Math.round((ex.to - ex.from) / (1000 * 60 * 60 * 24)) + 1;
+      if (ex.type === 'childcare' || ex.type === 'absenteeism' || ex.type === 'unpaid_over14') {
+        excludedDaysTotal += days;
+      }
+    });
+
+    var exMonths = Math.floor(excludedDaysTotal / 30);
+    var exDays = excludedDaysTotal % 30;
+
+    totalMonths -= exMonths;
+    extraDays -= exDays;
+
+    if (extraDays < 0) {
+      totalMonths -= 1;
+      extraDays += 30;
+    }
+
+    if (extraDays >= 15) totalMonths += 1;
+
+    if (totalMonths < 0) totalMonths = 0;
+
+    return {
+      totalMonths: totalMonths,
+      years: Math.floor(totalMonths / 12),
+      months: totalMonths % 12,
+      extraDays: extraDays,
+      excludedDays: excludedDaysTotal
+    };
+  }
+
+  function calcCalendarDays() {
+    var rows = $('monthsBody').querySelectorAll('tr');
+    var totalDays = 0;
+    var totalIncome = 0;
+    var hasExclusions = false;
+    var monthList = [];
+
+    rows.forEach(function(tr) {
+      var y = parseInt(tr.dataset.year);
+      var m = parseInt(tr.dataset.month);
+      var dim = daysInMonth(y, m);
+      var salary = parseFloat(tr.querySelector('.salary').value) || 0;
+      var excluded = parseInt(tr.querySelector('.excluded').value) || 0;
+
+      var workStart = parseDate(tr.dataset.workStart);
+      var workEnd = parseDate(tr.dataset.workEnd);
+      var calendarInMonth = Math.round((workEnd - workStart) / (1000 * 60 * 60 * 24)) + 1;
+
+      var worked = calendarInMonth - excluded;
+      if (worked < 0) worked = 0;
+
+      var contribution;
+      if (calendarInMonth === dim && excluded === 0) {
+        contribution = AVG;
+      } else {
+        contribution = (AVG / dim) * worked;
+      }
+
+      if (excluded > 0) hasExclusions = true;
+
+      totalDays += contribution;
+      totalIncome += salary;
+
+      monthList.push({
+        label: MONTHS[m] + ' ' + y,
+        dim: dim,
+        calendarInMonth: calendarInMonth,
+        excluded: excluded,
+        worked: worked,
+        contribution: contribution,
+        salary: salary
+      });
+    });
+
+    return { totalDays: totalDays, totalIncome: totalIncome, hasExclusions: hasExclusions, months: monthList };
+  }
+
+  $('calcForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    var hireStr = $('hireDate').value;
+    var fireStr = $('fireDate').value;
+    if (!hireStr) { alert('Укажите дату приема'); return; }
+    if (!fireStr) { alert('Укажите дату увольнения'); return; }
+
+    var hire = parseDate(hireStr);
+    var fire = parseDate(fireStr);
+    if (!hire || !fire) { alert('Некорректная дата'); return; }
+    if (fire < hire) { alert('Дата увольнения раньше даты приема'); return; }
+
+    var mainVac = parseInt($('mainVacation').value, 10) || 28;
+    var extraVac = parseInt($('extraVacation').value, 10) || 0;
+    var vacationPerYear = mainVac + extraVac;
+    var used = parseInt($('usedVacation').value, 10) || 0;
+    var reason = $('reason').value;
+
+    var stazhExclusions = collectStazhExclusions();
+    var stazh = calcStazhMonths(hire, fire, stazhExclusions);
+
+    var fullCompensationReasons = ['liquidation', 'ip_stop', 'reduction', 'army', 'alt_service', 'restore'];
+    var isFullComp = false;
+    var fullCompReasonText = '';
+
+    if (stazh.totalMonths >= 11) {
+      isFullComp = true;
+      fullCompReasonText = 'Стаж 11 месяцев и больше — полная компенсация.';
+    } else if (stazh.totalMonths >= 5.5 && fullCompensationReasons.indexOf(reason) !== -1) {
+      isFullComp = true;
+      fullCompReasonText = 'Стаж от 5,5 до 11 месяцев и особое основание увольнения — полная компенсация.';
+    } else {
+      fullCompReasonText = 'Полная компенсация не положена — считаем пропорционально отработанным месяцам.';
+    }
+
+    var entitledDays;
+    if (isFullComp) {
+      var fullYears = Math.floor(stazh.totalMonths / 12);
+      var remMonths = stazh.totalMonths % 12;
+      entitledDays = fullYears * vacationPerYear + (vacationPerYear / 12) * remMonths;
+      if (remMonths === 0 && fullYears === 0) entitledDays = vacationPerYear;
+    } else {
+      entitledDays = (vacationPerYear / 12) * stazh.totalMonths;
+    }
+
+    var unused = entitledDays - used;
+    if (unused < 0) unused = 0;
+
+    var periodData = calcCalendarDays();
+    if (periodData.totalIncome <= 0) {
+      alert('Заполните зарплату за месяцы расчётного периода');
+      return;
+    }
+
+    var avgDaily = periodData.totalDays > 0 ? periodData.totalIncome / periodData.totalDays : 0;
+
+    var mrotApplied = false;
+    var finalAvg = avgDaily;
+    var mrotReason = '';
+    if (stazh.totalMonths >= 12 && !periodData.hasExclusions) {
+      if (avgDaily * AVG < MROT) {
+        finalAvg = MROT / AVG;
+        mrotApplied = true;
+        mrotReason = 'Стаж 12+ месяцев, исключаемых периодов нет, но средний месячный заработок ниже МРОТ. Применён МРОТ.';
+      } else {
+        mrotReason = 'Стаж 12+ месяцев, исключаемых периодов нет, средний месячный заработок выше МРОТ. МРОТ не применяется.';
+      }
+    } else if (stazh.totalMonths < 12) {
+      mrotReason = 'Стаж меньше 12 месяцев — правило МРОТ не применяется.';
+    } else {
+      mrotReason = 'Есть исключаемые периоды — правило МРОТ не применяется.';
+    }
+
+    var compensation = unused * finalAvg;
+
+    lastResult = {
+      hire: hire, fire: fire,
+      stazh: stazh, vacationPerYear: vacationPerYear,
+      mainVac: mainVac, extraVac: extraVac,
+      used: used, entitledDays: entitledDays, unused: unused,
+      periodData: periodData, avgDaily: avgDaily,
+      mrotApplied: mrotApplied, finalAvg: finalAvg, mrotReason: mrotReason,
+      compensation: compensation, isFullComp: isFullComp,
+      fullCompReasonText: fullCompReasonText, reason: reason
+    };
+
+    renderResults(lastResult);
+  });
+
+  function renderResults(r) {
+    $('rStazh').textContent = r.stazh.years + ' г. ' + r.stazh.months + ' мес. (' + r.stazh.totalMonths + ' мес.)';
+    $('rDays').textContent = num(r.unused) + ' дн.';
+    $('rAvg').textContent = money(r.finalAvg);
+    $('rSum').textContent = money(r.compensation);
+    $('mrotBadge').classList.toggle('hidden', !r.mrotApplied);
+
+    var html = '';
+    html += '<div class="details-item"><span class="label">Дата приема</span><span class="value">' + r.hire.toLocaleDateString('ru-RU') + '</span></div>';
+    html += '<div class="details-item"><span class="label">Дата увольнения</span><span class="value">' + r.fire.toLocaleDateString('ru-RU') + '</span></div>';
+    html += '<div class="details-item"><span class="label">Отпускной стаж</span><span class="value">' + r.stazh.totalMonths + ' полных месяцев</span></div>';
+    html += '<div class="details-item"><span class="label">Дней отпуска в год</span><span class="value">' + r.vacationPerYear + '</span></div>';
+    html += '<div class="details-item"><span class="label">Заработано дней отпуска</span><span class="value">' + num(r.entitledDays) + '</span></div>';
+    html += '<div class="details-item"><span class="label">Использовано дней</span><span class="value">' + r.used + '</span></div>';
+    html += '<div class="details-item"><span class="label">Дней к компенсации</span><span class="value">' + num(r.unused) + '</span></div>';
+    html += '<div class="details-item"><span class="label">Доход за расчётный период</span><span class="value">' + money(r.periodData.totalIncome) + '</span></div>';
+    html += '<div class="details-item"><span class="label">Календарных дней в расчёте</span><span class="value">' + num(r.periodData.totalDays) + '</span></div>';
+    html += '<div class="details-item"><span class="label">Средний дневной заработок</span><span class="value">' + money(r.avgDaily) + '</span></div>';
+    if (r.mrotApplied) {
+      html += '<div class="details-item"><span class="label">Средний дневной заработок с МРОТ</span><span class="value">' + money(r.finalAvg) + '</span></div>';
+    }
+    r.periodData.months.forEach(function(md) {
+      var suffix = md.calendarInMonth === md.dim && md.excluded === 0
+        ? ' (полный)'
+        : ' — отработано ' + md.worked + ' из ' + md.dim + ' дн.';
+      html += '<div class="details-item" style="font-size:0.8rem;"><span class="label">' + md.label + suffix + '</span><span class="value">' + num(md.contribution) + ' дн.</span></div>';
+    });
+    html += '<div class="details-item" style="font-weight:700; border-top:2px solid #3b82f6; margin-top:8px; padding-top:10px;"><span class="label">Сумма компенсации</span><span class="value" style="color:#2563eb; font-size:1.05rem;">' + money(r.compensation) + '</span></div>';
+
+    $('detailsList').innerHTML = html;
+
+    var exp = '';
+    exp += '<h4>Как получилась сумма</h4>';
+    exp += '<p><strong>Шаг 1. Стаж.</strong> Человек работал с ' + r.hire.toLocaleDateString('ru-RU') + ' по ' + r.fire.toLocaleDateString('ru-RU') + '. ';
+    if (r.stazh.excludedDays > 0) {
+      exp += 'Из стажа вычтено ' + r.stazh.excludedDays + ' дней (периоды, не идущие в стаж). ';
+    }
+    exp += 'Получилось ' + r.stazh.years + ' г. ' + r.stazh.months + ' мес. (округлено по правилу «15 дней»).</p>';
+
+    exp += '<p><strong>Шаг 2. Полная или пропорциональная компенсация.</strong> ' + r.fullCompReasonText + '</p>';
+
+    exp += '<p><strong>Шаг 3. Дни к компенсации.</strong> За год положено ' + r.vacationPerYear + ' дней. ';
+    exp += 'За ' + r.stazh.totalMonths + ' мес. заработано ' + num(r.entitledDays) + ' дней. ';
+    exp += 'Минус ' + r.used + ' использованных. Итого ' + num(r.unused) + ' дней.</p>';
+
+    exp += '<p><strong>Шаг 4. Расчётный период.</strong> Взяты месяцы от даты приёма до даты увольнения, но не глубже 12 месяцев перед увольнением. ';
+    exp += 'Доход за период: ' + money(r.periodData.totalIncome) + '. ';
+    exp += 'Календарных дней в расчёте: ' + num(r.periodData.totalDays) + '.</p>';
+
+    exp += '<p><strong>Шаг 5. Средний дневной заработок.</strong> ' + money(r.periodData.totalIncome) + ' / ' + num(r.periodData.totalDays) + ' = ' + money(r.avgDaily) + '.</p>';
+
+    exp += '<p><strong>Шаг 6. МРОТ.</strong> ' + r.mrotReason;
+    if (r.mrotApplied) {
+      exp += ' Средний дневной заработок с учётом МРОТ: ' + money(r.finalAvg) + '.';
+    }
+    exp += '</p>';
+
+    exp += '<p><strong>Шаг 7. Итог.</strong> ' + num(r.unused) + ' дней × ' + money(r.finalAvg) + ' = <strong>' + money(r.compensation) + '</strong>.</p>';
+
+    $('explainBox').innerHTML = exp;
+
+    $('result').classList.remove('hidden');
+    $('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  $('btnXml').addEventListener('click', function () {
+    if (!lastResult) return;
+    var r = lastResult;
+    var xml = '<?xml version="1.0" encoding="UTF-8"?>\n' +
+'<VacationCompensation>\n' +
+'  <LegalBase>\n' +
+'    <Document>Постановление Правительства РФ от 24.04.2025 № 540</Document>\n' +
+'    <MROT>' + MROT + '</MROT>\n' +
+'    <AvgMonthDays>' + AVG + '</AvgMonthDays>\n' +
+'  </LegalBase>\n' +
+'  <Employee>\n' +
+'    <HireDate>' + r.hire.toISOString().split('T')[0] + '</HireDate>\n' +
+'    <FireDate>' + r.fire.toISOString().split('T')[0] + '</FireDate>\n' +
+'  </Employee>\n' +
+'  <VacationStazh>\n' +
+'    <TotalMonths>' + r.stazh.totalMonths + '</TotalMonths>\n' +
+'    <Years>' + r.stazh.years + '</Years>\n' +
+'    <Months>' + r.stazh.months + '</Months>\n' +
+'    <ExcludedDays>' + r.stazh.excludedDays + '</ExcludedDays>\n' +
+'  </VacationStazh>\n' +
+'  <Calculation>\n' +
+'    <VacationDaysPerYear>' + r.vacationPerYear + '</VacationDaysPerYear>\n' +
+'    <EntitledDays>' + r.entitledDays.toFixed(2) + '</EntitledDays>\n' +
+'    <UsedDays>' + r.used + '</UsedDays>\n' +
+'    <UnusedDays>' + r.unused.toFixed(2) + '</UnusedDays>\n' +
+'    <TotalIncome>' + r.periodData.totalIncome.toFixed(2) + '</TotalIncome>\n' +
+'    <CalendarDays>' + r.periodData.totalDays.toFixed(2) + '</CalendarDays>\n' +
+'    <AverageDailyEarning>' + r.avgDaily.toFixed(2) + '</AverageDailyEarning>\n' +
+'    <MrotApplied>' + r.mrotApplied + '</MrotApplied>\n' +
+'    <FinalAverageDailyEarning>' + r.finalAvg.toFixed(2) + '</FinalAverageDailyEarning>\n' +
+'    <CompensationAmount>' + r.compensation.toFixed(2) + '</CompensationAmount>\n' +
+'  </Calculation>\n' +
+'</VacationCompensation>';
+
+    var blob = new Blob([xml], { type: 'application/xml;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'vacation_compensation_' + r.fire.toISOString().split('T')[0] + '.xml';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  $('btnPrint').addEventListener('click', function () { window.print(); });
+
+  var today = new Date();
+  var iso = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+  $('fireDate').value = iso;
+})();
+</script>
+</body>
+</html>
